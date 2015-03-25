@@ -57,6 +57,83 @@
           </systemProperties>
 		</configuration>
       </plugin>
+
+			<plugin>
+				<groupId>org.jolokia</groupId>
+				<artifactId>docker-maven-plugin</artifactId>
+				<version>0.11.2</version>
+				<configuration>
+					<images>
+						<image>
+							<alias>db</alias>
+							<name>wnameless/oracle-xe-11g</name>
+							<run>
+								<wait>
+									<!--log>mysqld: ready for connections</log-->
+									<time>20000</time>
+								</wait>
+								<log>
+									<prefix>DB</prefix>
+									<color>yellow</color>
+								</log>
+								<ports>
+									<port>49161:1521</port>
+								</ports>
+							</run>
+						</image>
+						<image>
+							<alias>tomcat</alias>
+							<name>sdco_poc/activiti-explorer:${project.version}</name>
+							<build>
+								<from>tomcat:7</from>
+								<ports>
+									<port>8080</port>
+								</ports>
+								<assembly>
+									<basedir>/usr/local/tomcat</basedir>
+									<descriptor>assembly.xml</descriptor>
+								</assembly>
+							</build>
+							<run>
+								<ports>
+									<port>80:8080</port>
+								</ports>
+								<wait>
+									<!-- Check for this URL to return a 200 return code .... -->
+									<url>http://localhost:8080/access</url>
+									<!-- ... but at max 10 seconds -->
+									<time>10000</time>
+								</wait>
+								<links>
+									<link>db:db</link>
+								</links>
+								<log>
+									<prefix>TC</prefix>
+									<color>cyan</color>
+								</log>
+							</run>
+						</image>
+					</images>
+				</configuration>
+				<executions>
+					<execution>
+						<id>start</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>build</goal>
+							<goal>start</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>stop</id>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
     </plugins>
    
   </build>
@@ -152,11 +229,12 @@
       <groupId>commons-dbcp</groupId>
       <artifactId>commons-dbcp</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-    </dependency>
-
+<dependency>
+	<groupId>mysql</groupId>
+	<artifactId>mysql-connector-java</artifactId>
+	<version>5.1.34</version>
+	<scope>compile</scope>
+</dependency>
     <!-- Running example processes -->
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
